@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Affine Cipher</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 420px;
+      width: 100%;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    textarea, input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    button {
+      background: #ff6600;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #cc5200;
+    }
+    .output {
+      margin-top: 15px;
+      padding: 12px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      min-height: 50px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔐 Affine Cipher</h2>
+    <textarea id="text" rows="3" placeholder="Enter text..."></textarea>
+    <input type="number" id="a" placeholder="Enter multiplicative key (a)" min="1" max="25">
+    <input type="number" id="b" placeholder="Enter additive key (b)" min="0" max="25">
+    <button onclick="encrypt()">Encrypt</button>
+    <button onclick="decrypt()">Decrypt</button>
+    <div class="output" id="output"></div>
+  </div>
+
+  <script>
+    // gcd helper
+    function gcd(a, b) {
+      while (b !== 0) {
+        [a, b] = [b, a % b];
+      }
+      return a;
+    }
+
+    // modular inverse
+    function modInverse(a, m) {
+      a = ((a % m) + m) % m;
+      for (let x = 1; x < m; x++) {
+        if ((a * x) % m === 1) return x;
+      }
+      return null; // no inverse
+    }
+
+    function affineEncrypt(text, a, b) {
+      if (gcd(a, 26) !== 1) return "⚠️ Invalid key 'a'. It must be coprime with 26.";
+
+      return text
+        .toUpperCase()
+        .split("")
+        .map(char => {
+          if (char >= "A" && char <= "Z") {
+            let x = char.charCodeAt(0) - 65;
+            let y = (a * x + b) % 26;
+            return String.fromCharCode(y + 65);
+          }
+          return char;
+        })
+        .join("");
+    }
+
+    function affineDecrypt(cipher, a, b) {
+      if (gcd(a, 26) !== 1) return "⚠️ Invalid key 'a'. It must be coprime with 26.";
+
+      let aInv = modInverse(a, 26);
+      if (!aInv) return "⚠️ No modular inverse for 'a'.";
+
+      return cipher
+        .toUpperCase()
+        .split("")
+        .map(char => {
+          if (char >= "A" && char <= "Z") {
+            let y = char.charCodeAt(0) - 65;
+            let x = (aInv * (y - b + 26)) % 26;
+            return String.fromCharCode(x + 65);
+          }
+          return char;
+        })
+        .join("");
+    }
+
+    function encrypt() {
+      const text = document.getElementById("text").value;
+      const a = parseInt(document.getElementById("a").value);
+      const b = parseInt(document.getElementById("b").value);
+      const result = affineEncrypt(text, a, b);
+      document.getElementById("output").innerText = "🔒 Encrypted: " + result;
+    }
+
+    function decrypt() {
+      const text = document.getElementById("text").value;
+      const a = parseInt(document.getElementById("a").value);
+      const b = parseInt(document.getElementById("b").value);
+      const result = affineDecrypt(text, a, b);
+      document.getElementById("output").innerText = "🔓 Decrypted: " + result;
+    }
+  </script>
+</body>
+</html>
